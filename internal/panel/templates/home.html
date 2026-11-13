@@ -1,0 +1,392 @@
+{{template "head" .}}
+<style nonce="{{.Nonce}}">
+header.top{display:flex;align-items:center;gap:16px;padding:18px clamp(16px,4vw,40px);max-width:1180px;margin:0 auto}
+header.top .who{margin-left:auto;display:flex;align-items:center;gap:12px;color:var(--muted);font-size:14px}
+header.top .who img{width:32px;height:32px;border-radius:50%}
+main{max-width:1180px;margin:0 auto;padding:8px clamp(16px,4vw,40px) 120px}
+
+/* Signal path: servers -> Plexmor -> Stremio */
+.path{display:grid;grid-template-columns:minmax(0,1.15fr) 64px minmax(200px,.7fr) 64px minmax(0,1.25fr);align-items:center;margin:20px 0 44px}
+.path h2{font-size:13px;font-weight:600;color:var(--muted);font-family:var(--ui);letter-spacing:0;margin:0 0 10px}
+.sources{display:grid;gap:10px;position:relative}
+.server{display:grid;grid-template-columns:auto 1fr auto;gap:4px 12px;align-items:center;padding:14px 16px;border-radius:var(--r-m);background:var(--raised)}
+.server .dot{width:10px;height:10px;border-radius:50%;background:var(--ok);box-shadow:0 0 0 4px rgba(111,211,166,.14)}
+.server.down{background:transparent;box-shadow:inset 0 0 0 1px var(--line-soft)}
+.server.down .dot{background:var(--bad);box-shadow:0 0 0 4px rgba(255,122,122,.12)}
+.server strong{font:600 17px/1.2 var(--display)}
+.server .owner{color:var(--muted);font-size:13px}
+.server .stat{grid-column:2/4;color:var(--muted);font-size:13px;display:flex;flex-wrap:wrap;gap:4px 14px}
+.server .stat b{color:var(--text);font-weight:600}
+.server.down .stat{color:var(--bad)}
+.wire{position:relative;height:2px;background:var(--line);border-radius:2px}
+.wire::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,transparent,var(--amber),transparent);background-size:40% 100%;background-repeat:no-repeat;animation:signal 2.4s ease-in-out 1 .4s both}
+@keyframes signal{from{background-position:-60% 0}to{background-position:160% 0}}
+.hub{display:grid;justify-items:center;text-align:center;gap:6px;padding:22px 16px;border-radius:var(--r-l);background:radial-gradient(120% 90% at 50% 0%,rgba(242,169,59,.18),transparent 70%),var(--raised);box-shadow:inset 0 0 0 1px rgba(242,169,59,.35)}
+.hub img{width:64px;height:64px}
+.hub .count{font:700 30px/1 var(--display);letter-spacing:-.02em;margin-top:6px}
+.hub small{color:var(--muted);font-size:13px}
+.dest{padding:20px;border-radius:var(--r-l);background:var(--sunk);box-shadow:inset 0 0 0 1px var(--line)}
+.dest h3{font-size:22px;letter-spacing:-.02em}
+.dest p{color:var(--muted);font-size:14px;margin:6px 0 16px;max-width:46ch}
+.url{display:flex;gap:8px;align-items:center;background:var(--night);border-radius:var(--r-s);padding:4px 4px 4px 12px;box-shadow:inset 0 0 0 1px var(--line)}
+.url input{flex:1;min-width:0;background:none;border:0;color:var(--muted);font-size:13px;padding:8px 0}
+.url input:focus{outline:none;color:var(--text)}
+.url .btn{padding:8px 14px;font-size:14px}
+.dest .actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:14px}
+.dest .actions .btn.link{margin-left:auto}
+
+/* Tabs */
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);margin-bottom:8px;overflow-x:auto}
+.tabs button{background:none;border:0;padding:12px 16px 14px;color:var(--muted);font-weight:600;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;white-space:nowrap}
+.tabs button[aria-selected=true]{color:var(--text);border-bottom-color:var(--amber)}
+.tabs button:hover{color:var(--text)}
+[role=tabpanel][hidden]{display:none}
+
+/* Settings rows */
+.setting{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.25fr);gap:16px 48px;padding:26px 0;border-bottom:1px solid var(--line-soft)}
+.setting:last-child{border-bottom:0}
+.setting h3{font-size:18px}
+.setting .what p{color:var(--muted);font-size:14px;margin-top:6px;max-width:44ch}
+.control{display:grid;gap:10px;align-content:start}
+
+/* Language order */
+.langs{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.langs li{display:grid;grid-template-columns:28px 1fr auto;align-items:center;gap:10px;padding:8px 8px 8px 12px;border-radius:var(--r-s);background:var(--raised)}
+.langs .n{font:700 15px var(--display);color:var(--amber)}
+.langs .tools{display:flex;gap:2px}
+.icon{display:grid;place-items:center;width:32px;height:32px;border:0;border-radius:8px;background:none;color:var(--muted);cursor:pointer}
+.icon:hover{background:var(--line-soft);color:var(--text)}
+.icon:disabled{opacity:.25;cursor:default;background:none}
+.icon svg{width:16px;height:16px}
+select.add{appearance:none;background:var(--night) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='none' stroke='%23a79db3' stroke-width='2'%3E%3Cpath d='M2 4l4 4 4-4'/%3E%3C/svg%3E") no-repeat right 14px center;border:0;box-shadow:inset 0 0 0 1px var(--line);border-radius:var(--r-s);padding:10px 36px 10px 12px;color:var(--muted)}
+
+/* Toggle chips */
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip input{position:absolute;opacity:0;pointer-events:none}
+.chip span{display:inline-block;padding:8px 14px;border-radius:999px;box-shadow:inset 0 0 0 1px var(--line);color:var(--muted);font-weight:600;cursor:pointer;user-select:none}
+.chip input:checked+span{background:var(--amber-glow);box-shadow:inset 0 0 0 1px var(--amber);color:var(--text)}
+.chip input:focus-visible+span{outline:2px solid var(--amber);outline-offset:2px}
+
+/* Stepper */
+.stepper{display:inline-flex;align-items:center;gap:4px;border-radius:999px;box-shadow:inset 0 0 0 1px var(--line);padding:4px;width:max-content}
+.stepper input{width:64px;text-align:center;background:none;border:0;font:600 18px var(--display);-moz-appearance:textfield}
+.stepper input::-webkit-inner-spin-button{-webkit-appearance:none}
+.hint{color:var(--faint);font-size:13px}
+
+/* Mode options */
+.modes{display:grid;gap:8px}
+.mode{display:grid;grid-template-columns:20px 1fr;gap:4px 12px;padding:14px 16px;border-radius:var(--r-m);box-shadow:inset 0 0 0 1px var(--line);cursor:pointer}
+.mode input{margin:3px 0 0;accent-color:var(--amber);width:16px;height:16px}
+.mode b{font-weight:600}
+.mode small{grid-column:2;color:var(--muted);font-size:13px}
+.mode:has(input:checked){box-shadow:inset 0 0 0 1px var(--amber);background:var(--amber-glow)}
+
+/* Switch */
+.switch{display:flex;align-items:center;gap:14px;cursor:pointer}
+.switch input{appearance:none;flex:none;width:44px;height:26px;border-radius:999px;background:var(--line);position:relative;cursor:pointer;margin:0;transition:background .15s}
+.switch input::after{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:var(--text);transition:transform .15s}
+.switch input:checked{background:var(--amber)}
+.switch input:checked::after{transform:translateX(18px);background:var(--amber-ink)}
+
+/* Libraries */
+.lib-server{padding:24px 0;border-bottom:1px solid var(--line-soft)}
+.lib-server:last-child{border-bottom:0}
+.lib-head{display:flex;flex-wrap:wrap;align-items:center;gap:8px 16px;margin-bottom:14px}
+.lib-head h3{font-size:20px}
+.lib-head .meta{color:var(--muted);font-size:14px}
+.lib-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:8px}
+.lib{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 14px;border-radius:var(--r-s);background:var(--raised)}
+.lib small{display:block;color:var(--muted);font-size:13px}
+.lib-server.off .lib-list{opacity:.4}
+.err{color:var(--bad);font-size:13px;margin-top:8px;word-break:break-word}
+.empty{color:var(--muted);padding:28px 0}
+
+/* Users */
+.users{list-style:none;margin:0;padding:0}
+.users li{display:grid;grid-template-columns:40px 1fr auto;align-items:center;gap:14px;padding:14px 0;border-bottom:1px solid var(--line-soft)}
+.users img,.users .initial{width:40px;height:40px;border-radius:50%}
+.users .initial{display:grid;place-items:center;background:var(--raised);font:700 16px var(--display)}
+.users small{display:block;color:var(--muted);font-size:13px}
+.badge{display:inline-block;margin-left:8px;padding:1px 8px;border-radius:999px;background:var(--amber-glow);color:var(--amber);font-size:12px;font-weight:600;vertical-align:2px}
+.admin-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:22px}
+.setting.intro{border:0;padding-bottom:8px}
+
+/* Save bar */
+.savebar{position:fixed;left:50%;bottom:20px;transform:translate(-50%,140%);display:flex;align-items:center;gap:16px;padding:10px 10px 10px 20px;border-radius:999px;background:var(--text);color:var(--night);box-shadow:0 12px 40px rgba(0,0,0,.45);transition:transform .25s ease,visibility 0s .25s;visibility:hidden;z-index:10;width:max-content;max-width:calc(100% - 32px)}
+.savebar.show{transform:translate(-50%,0);visibility:visible;transition:transform .25s ease}
+.savebar span{font-weight:600}
+.savebar .btn.quiet{color:var(--night);box-shadow:inset 0 0 0 1px rgba(30,26,38,.25)}
+
+@media (max-width:900px){
+  .path{grid-template-columns:1fr;gap:0}
+  .wire{width:2px;height:28px;justify-self:center}
+  .wire::after{background:linear-gradient(180deg,transparent,var(--amber),transparent);background-size:100% 40%;animation-name:signal-v}
+  @keyframes signal-v{from{background-position:0 -60%}to{background-position:0 160%}}
+  .hub{grid-template-columns:auto 1fr;justify-items:start;text-align:left;align-items:center}
+  .hub img{grid-row:1/4;width:52px;height:52px}
+  .setting{grid-template-columns:1fr;gap:14px}
+  header.top .who span{display:none}
+}
+</style>
+</head>
+<body>
+<header class="top">
+  <a class="brand" href="/"><img src="/static/logo.svg" alt=""><span>Plexmor</span></a>
+  <div class="who">
+    {{if .Account.Thumb}}<img src="{{.Account.Thumb}}" alt="">{{end}}
+    <span>{{.Account.Username}}</span>
+    {{template "langswitch" .}}
+    <button class="btn link" data-post="/logout" data-reload="1">{{t "home.logout"}}</button>
+  </div>
+</header>
+
+<main>
+<section class="path" aria-label="{{t "home.status"}}">
+  <div>
+    <h2>{{t "home.servers"}}</h2>
+    <div class="sources">
+      {{range .Servers}}
+      <div class="server{{if not .Healthy}} down{{end}}" {{if .Error}}title="{{.Error}}"{{end}}>
+        <span class="dot" aria-hidden="true"></span>
+        <strong>{{.Name}}</strong>
+        <span class="owner">{{if .Owner}}{{t "home.owner" .Owner}}{{else}}{{t "home.mine"}}{{end}}</span>
+        <div class="stat">
+          {{if .Healthy}}<span><b>{{.Items}}</b> {{t "home.titles"}}</span><span>{{.Connection}}, {{.LatencyMs}} ms</span>{{if .Synced}}<span>{{t "home.checked" .Synced}}</span>{{end}}
+          {{else}}<span>{{t "home.offline"}}</span>{{end}}
+        </div>
+      </div>
+      {{else}}
+      <p class="empty">{{t "home.noservers"}}</p>
+      {{end}}
+    </div>
+  </div>
+  <div class="wire" aria-hidden="true"></div>
+  <div class="hub">
+    <img src="/static/logo.svg" alt="">
+    <div class="count">{{.Items}}</div>
+    <small>{{t "home.ready"}}</small>
+    <small>Plexmor {{.Version}}</small>
+  </div>
+  <div class="wire" aria-hidden="true"></div>
+  <div class="dest">
+    <h3>Stremio</h3>
+    <p>{{t "home.addon"}}</p>
+    <div class="url">
+      <input id="manifest" value="{{.ManifestURL}}" readonly aria-label="{{t "home.addr"}}">
+      <button class="btn quiet" id="copy">{{t "home.copy"}}</button>
+    </div>
+    <div class="actions">
+      <a class="btn" href="{{.StremioURL}}">{{t "home.install"}}</a>
+      <a class="btn quiet" href="{{.WebURL}}" target="_blank" rel="noopener">{{t "home.web"}}</a>
+      <button class="btn link" id="newurl">{{t "home.newurl"}}</button>
+    </div>
+  </div>
+</section>
+
+<form id="prefs">
+<div class="tabs" role="tablist">
+  <button type="button" role="tab" aria-selected="true" aria-controls="t-play" id="b-play">{{t "tab.play"}}</button>
+  <button type="button" role="tab" aria-selected="false" aria-controls="t-libs" id="b-libs">{{t "tab.libs"}}</button>
+  {{if .Account.Admin}}<button type="button" role="tab" aria-selected="false" aria-controls="t-users" id="b-users">{{t "tab.users"}}</button>{{end}}
+</div>
+
+<section role="tabpanel" id="t-play" aria-labelledby="b-play">
+  <div class="setting">
+    <div class="what"><h3>{{t "audio.title"}}</h3><p>{{t "audio.text"}}</p></div>
+    <div class="control">
+      <ol class="langs" id="langs">{{range $i, $l := .Langs}}
+        <li data-key="{{$l.Key}}"><span class="n"></span><span>{{$l.Name}}</span><span class="tools">
+          <button type="button" class="icon up" data-label="{{t "audio.up"}}" aria-label="{{t "audio.up"}} {{$l.Name}}"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 10l4-4 4 4"/></svg></button>
+          <button type="button" class="icon down" data-label="{{t "audio.down"}}" aria-label="{{t "audio.down"}} {{$l.Name}}"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6l4 4 4-4"/></svg></button>
+          <button type="button" class="icon remove" data-label="{{t "audio.remove"}}" aria-label="{{t "audio.remove"}} {{$l.Name}}"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4l8 8M12 4l-8 8"/></svg></button>
+        </span></li>{{end}}
+      </ol>
+      <select class="add" id="addlang" aria-label="{{t "audio.add.aria"}}">
+        <option value="">{{t "audio.add"}}</option>
+        {{range .LangOptions}}<option value="{{.Key}}">{{.Name}}</option>{{end}}
+      </select>
+      <input type="hidden" name="languages" id="languages">
+    </div>
+  </div>
+
+  <div class="setting">
+    <div class="what"><h3>{{t "res.title"}}</h3><p>{{t "res.text"}}</p></div>
+    <div class="control chips">
+      <label class="chip"><input type="checkbox" name="res_4k" {{if index .Resolutions "4k"}}checked{{end}}><span>4K</span></label>
+      <label class="chip"><input type="checkbox" name="res_1440" {{if index .Resolutions "1440"}}checked{{end}}><span>1440p</span></label>
+      <label class="chip"><input type="checkbox" name="res_1080" {{if index .Resolutions "1080"}}checked{{end}}><span>1080p</span></label>
+      <label class="chip"><input type="checkbox" name="res_720" {{if index .Resolutions "720"}}checked{{end}}><span>720p</span></label>
+      <label class="chip"><input type="checkbox" name="res_sd" {{if index .Resolutions "sd"}}checked{{end}}><span>SD</span></label>
+    </div>
+  </div>
+
+  <div class="setting">
+    <div class="what"><h3>{{t "max.title"}}</h3><p>{{t "max.text"}}</p></div>
+    <div class="control">
+      <div class="stepper">
+        <button type="button" class="icon" data-step="-1" aria-label="{{t "max.less"}}"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 8h10"/></svg></button>
+        <input type="number" name="max_streams" id="max" min="0" max="100" value="{{.MaxStreams}}" aria-label="{{t "max.title"}}">
+        <button type="button" class="icon" data-step="1" aria-label="{{t "max.more"}}"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 8h10M8 3v10"/></svg></button>
+      </div>
+      <span class="hint" id="maxhint"></span>
+    </div>
+  </div>
+
+  <div class="setting">
+    <div class="what"><h3>{{t "mode.title"}}</h3><p>{{t "mode.text"}}</p></div>
+    <div class="control modes">
+      <label class="mode"><input type="radio" name="mode" value="auto" {{if eq .Mode "auto"}}checked{{end}}><b>{{t "mode.auto"}}</b><small>{{t "mode.auto.text"}}</small></label>
+      <label class="mode"><input type="radio" name="mode" value="proxy" {{if eq .Mode "proxy"}}checked{{end}}><b>{{t "mode.proxy"}}</b><small>{{t "mode.proxy.text"}}</small></label>
+      <label class="mode"><input type="radio" name="mode" value="direct" {{if eq .Mode "direct"}}checked{{end}}><b>{{t "mode.direct"}}</b><small>{{t "mode.direct.text"}}</small></label>
+    </div>
+  </div>
+
+  <div class="setting">
+    <div class="what"><h3>{{t "tc.title"}}</h3><p>{{t "tc.text"}}</p></div>
+    <div class="control"><label class="switch"><input type="checkbox" name="transcode" {{if .Account.Prefs.Transcode}}checked{{end}}>{{t "tc.switch"}}</label></div>
+  </div>
+
+  <div class="setting">
+    <div class="what"><h3>{{t "cat.title"}}</h3><p>{{t "cat.text"}}</p></div>
+    <div class="control"><label class="switch"><input type="checkbox" name="catalogs" {{if not .Account.Prefs.HideCatalogs}}checked{{end}}>{{t "cat.switch"}}</label></div>
+  </div>
+</section>
+
+<section role="tabpanel" id="t-libs" aria-labelledby="b-libs" hidden>
+  {{range .Servers}}
+  <div class="lib-server{{if not .Enabled}} off{{end}}">
+    <div class="lib-head">
+      <label class="switch"><input type="checkbox" name="server_{{.MachineID}}" class="srv" {{if .Enabled}}checked{{end}}><span class="sr">{{t "libs.use" .Name}}</span></label>
+      <h3>{{.Name}}</h3>
+      <span class="meta">{{if .Owner}}{{t "home.owner" .Owner}}, {{end}}{{if .Healthy}}{{.Items}} {{t "home.titles"}}{{else}}{{t "libs.offline"}}{{end}}</span>
+    </div>
+    {{if .Sections}}<div class="lib-list">{{$m := .MachineID}}{{range .Sections}}
+      <label class="lib switch"><span>{{.Title}}<small>{{.Kind}}</small></span><input type="checkbox" name="section_{{$m}}_{{.Key}}" {{if .Enabled}}checked{{end}}></label>{{end}}
+    </div>{{else}}<p class="hint">{{t "libs.pending"}}</p>{{end}}
+    {{if and (not .Healthy) .Error}}<p class="err">{{.Error}}</p>{{end}}
+  </div>
+  {{else}}<p class="empty">{{t "libs.none"}}</p>{{end}}
+</section>
+
+{{if .Account.Admin}}
+<section role="tabpanel" id="t-users" aria-labelledby="b-users" hidden>
+  <div class="setting intro">
+    <div class="what"><h3>{{t "users.title"}}</h3><p>{{t "users.text"}}</p></div>
+  </div>
+  <ul class="users">{{range .Users}}
+    <li>{{if .Thumb}}<img src="{{.Thumb}}" alt="">{{else}}<span class="initial">{{initial .Name}}</span>{{end}}
+      <span>{{.Name}}{{if .Admin}}<span class="badge">admin</span>{{end}}<small>{{t "users.seen" .LastSeen}}</small></span>
+      {{if not .Me}}<button type="button" class="btn danger" data-post="/api/users/{{.ID}}/delete" data-confirm="{{t "users.ask" .Name}}" data-reload="1">{{t "users.remove"}}</button>{{else}}<span class="hint">{{t "users.you"}}</span>{{end}}
+    </li>{{end}}
+  </ul>
+  <div class="admin-actions">
+    <button type="button" class="btn quiet" data-post="/api/reindex" data-toast="{{t "users.checking"}}">{{t "users.reindex"}}</button>
+    <a class="btn link" href="/metrics" target="_blank" rel="noopener">{{t "users.metrics"}}</a>
+  </div>
+</section>
+{{end}}
+</form>
+</main>
+
+<div class="savebar" id="savebar" role="region" aria-label="{{t "save.region"}}">
+  <span>{{t "save.text"}}</span>
+  <button type="button" class="btn quiet" id="discard">{{t "save.discard"}}</button>
+  <button type="button" class="btn" id="save">{{t "save.save"}}</button>
+</div>
+<div class="toast" id="toast" role="status"></div>
+
+<script nonce="{{.Nonce}}">
+{{template "langscript" .}}
+const $ = (s, el = document) => el.querySelector(s);
+const toast = (t) => { const e = $('#toast'); e.textContent = t; e.classList.add('show'); clearTimeout(e._t); e._t = setTimeout(() => e.classList.remove('show'), 2800); };
+const post = async (url, body) => {
+  const r = await fetch(url, {method: 'POST', body});
+  let d = {}; try { d = await r.json(); } catch (_) {}
+  if (!r.ok) throw new Error(d.error || 'Error ' + r.status);
+  return d;
+};
+
+// Tabs
+const tabs = [...document.querySelectorAll('[role=tab]')];
+const show = (tab) => {
+  tabs.forEach(t => { const on = t === tab; t.setAttribute('aria-selected', on); $('#' + t.getAttribute('aria-controls')).hidden = !on; });
+  try { localStorage.setItem('plexmor-tab', tab.id); } catch (_) {}
+};
+tabs.forEach(t => t.addEventListener('click', () => show(t)));
+try { const saved = document.getElementById(localStorage.getItem('plexmor-tab')); if (saved) show(saved); } catch (_) {}
+
+// Install
+$('#copy').onclick = async () => {
+  try { await navigator.clipboard.writeText($('#manifest').value); toast({{t "home.copied"}}); }
+  catch (_) { $('#manifest').select(); }
+};
+$('#newurl').onclick = async () => {
+  if (!confirm({{t "home.newurl.ask"}})) return;
+  try { await post('/api/newurl'); location.reload(); } catch (e) { toast(e.message); }
+};
+document.querySelectorAll('[data-post]').forEach(b => b.addEventListener('click', async (ev) => {
+  ev.preventDefault();
+  if (b.dataset.confirm && !confirm(b.dataset.confirm)) return;
+  try { await post(b.dataset.post); if (b.dataset.toast) toast(b.dataset.toast); if (b.dataset.reload) location.reload(); }
+  catch (e) { toast(e.message); }
+}));
+
+// Languages
+const list = $('#langs'), add = $('#addlang'), field = $('#languages');
+const syncLangs = () => {
+  const items = [...list.children];
+  items.forEach((li, i) => {
+    li.querySelector('.n').textContent = i + 1;
+    li.querySelector('.up').disabled = i === 0;
+    li.querySelector('.down').disabled = i === items.length - 1;
+    li.querySelector('.remove').disabled = items.length === 1;
+  });
+  field.value = items.map(li => li.dataset.key).join(',');
+};
+list.addEventListener('click', (ev) => {
+  const b = ev.target.closest('button'); if (!b || b.disabled) return;
+  const li = b.closest('li');
+  if (b.classList.contains('up')) li.previousElementSibling.before(li);
+  if (b.classList.contains('down')) li.nextElementSibling.after(li);
+  if (b.classList.contains('remove')) {
+    const o = document.createElement('option'); o.value = li.dataset.key; o.textContent = li.children[1].textContent; add.append(o); li.remove();
+  }
+  syncLangs(); dirty();
+});
+add.addEventListener('change', () => {
+  const o = add.selectedOptions[0]; if (!o.value) return;
+  const tpl = list.firstElementChild.cloneNode(true);
+  tpl.dataset.key = o.value; tpl.children[1].textContent = o.textContent;
+  tpl.querySelectorAll('button[data-label]').forEach(b => b.setAttribute('aria-label', b.dataset.label + ' ' + o.textContent));
+  list.append(tpl); o.remove(); add.value = ''; syncLangs(); dirty();
+});
+syncLangs();
+
+// Streams per title
+const max = $('#max'), maxhint = $('#maxhint');
+const syncMax = () => { maxhint.textContent = +max.value === 0 ? {{t "max.unlimited"}} : ''; };
+document.querySelectorAll('[data-step]').forEach(b => b.addEventListener('click', () => {
+  max.value = Math.max(0, Math.min(100, (+max.value || 0) + +b.dataset.step)); syncMax(); dirty();
+}));
+max.addEventListener('input', syncMax); syncMax();
+
+// Libraries: a disabled server dims its libraries
+document.querySelectorAll('.srv').forEach(s => s.addEventListener('change', () => s.closest('.lib-server').classList.toggle('off', !s.checked)));
+
+// Unsaved changes
+const form = $('#prefs'), bar = $('#savebar');
+const state = () => new URLSearchParams(new FormData(form)).toString();
+let saved = state();
+const dirty = () => bar.classList.toggle('show', state() !== saved);
+form.addEventListener('input', dirty);
+form.addEventListener('change', dirty);
+form.addEventListener('submit', (ev) => ev.preventDefault());
+$('#discard').onclick = () => location.reload();
+$('#save').onclick = async () => {
+  try { await post('/api/prefs', new URLSearchParams(new FormData(form))); saved = state(); dirty(); toast({{t "save.done"}}); }
+  catch (e) { toast(e.message); }
+};
+window.addEventListener('beforeunload', (ev) => { if (state() !== saved) { ev.preventDefault(); } });
+</script>
+</body>
+</html>

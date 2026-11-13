@@ -1,0 +1,62 @@
+{{define "head"}}<!doctype html>
+<html lang="{{.Lang}}">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark">
+<title>Plexmor</title>
+<link rel="icon" href="/static/logo.svg" type="image/svg+xml">
+<style nonce="{{.Nonce}}">
+@font-face{font-family:"Bricolage Grotesque";font-style:normal;font-weight:200 800;font-display:swap;src:url(/static/fonts/bricolage-grotesque.woff2) format("woff2")}
+@font-face{font-family:"Instrument Sans";font-style:normal;font-weight:400 700;font-display:swap;src:url(/static/fonts/instrument-sans.woff2) format("woff2")}
+:root{
+  --night:#1e1a26;--raised:#2a2433;--sunk:#17141e;--line:#3b3346;--line-soft:#302a3a;
+  --text:#ede6f2;--muted:#a79db3;--faint:#7d7389;
+  --amber:#f2a93b;--amber-deep:#d98a1c;--amber-ink:#2b1a05;--amber-glow:rgba(242,169,59,.16);
+  --ok:#6fd3a6;--bad:#ff7a7a;
+  --display:"Bricolage Grotesque",ui-sans-serif,system-ui,sans-serif;
+  --ui:"Instrument Sans",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+  --r-s:8px;--r-m:14px;--r-l:22px;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--night);color:var(--text);font:400 15px/1.55 var(--ui);font-feature-settings:"ss01"}
+a{color:var(--amber);text-underline-offset:3px}
+h1,h2,h3{font-family:var(--display);font-weight:650;letter-spacing:-.01em;margin:0}
+p{margin:0}
+button,input,select{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--amber);outline-offset:3px;border-radius:6px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+/* Buttons */
+.btn{display:inline-flex;align-items:center;gap:8px;border:0;border-radius:999px;padding:10px 18px;cursor:pointer;text-decoration:none;font-weight:600;white-space:nowrap;
+  background:var(--amber);color:var(--amber-ink)}
+.btn:hover{background:#f6b852}
+.btn.quiet{background:transparent;color:var(--text);box-shadow:inset 0 0 0 1px var(--line)}
+.btn.quiet:hover{box-shadow:inset 0 0 0 1px var(--muted)}
+.btn.link{background:none;padding:6px 0;color:var(--muted);font-weight:500;border-radius:4px}
+.btn.link:hover{color:var(--text)}
+.btn.danger{background:none;color:var(--bad);box-shadow:inset 0 0 0 1px rgba(255,122,122,.35)}
+.btn:disabled{opacity:.5;cursor:default}
+
+/* Brand */
+.brand{display:flex;align-items:center;gap:12px;text-decoration:none;color:var(--text)}
+.brand img{width:34px;height:34px}
+.brand span{font:700 21px/1 var(--display);letter-spacing:-.02em}
+
+.toast{position:fixed;left:50%;bottom:96px;transform:translate(-50%,8px);opacity:0;pointer-events:none;background:var(--text);color:var(--night);font-weight:600;padding:10px 16px;border-radius:999px;transition:opacity .2s,transform .2s;z-index:20}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+.langswitch{background:none;border:0;padding:6px 0;color:var(--muted);font-weight:500;cursor:pointer;border-radius:4px}
+.langswitch:hover{color:var(--text)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+{{end}}
+
+{{define "langswitch"}}<button type="button" class="langswitch" id="langswitch" data-lang="{{t "lang.other.code"}}" lang="{{t "lang.other.code"}}">{{t "lang.other"}}</button>{{end}}
+
+{{define "langscript"}}
+document.getElementById('langswitch').addEventListener('click', async (ev) => {
+  const b = ev.currentTarget; b.disabled = true;
+  try { await fetch('/lang', {method: 'POST', body: new URLSearchParams({lang: b.dataset.lang})}); } finally { location.reload(); }
+});
+{{end}}

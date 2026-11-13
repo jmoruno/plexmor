@@ -1,0 +1,40 @@
+name: CI
+
+# Formato, análisis estático, vulnerabilidades conocidas de Go y pruebas en cada push y PR.
+on:
+  push:
+    branches: ["**"]
+    paths-ignore: ["**.md", "docs/**"]
+  pull_request:
+  schedule:
+    - cron: "41 4 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod # usa la versión de "toolchain"
+          cache: false # sin dependencias externas: no hay go.sum que cachear
+      - name: Formato
+        run: test -z "$(gofmt -l .)" || (gofmt -l . && exit 1)
+      - name: Vet
+        run: go vet ./...
+      - name: Staticcheck
+        run: go run honnef.co/go/tools/cmd/staticcheck@2025.1.1 ./...
+      - name: Vulnerabilidades (govulncheck)
+        run: go run golang.org/x/vuln/cmd/govulncheck@v1.1.4 ./...
+      - name: Pruebas
+        run: go test -race -count=1 ./...
+      - name: Rendimiento
+        run: go test -run '^$' -bench . -benchmem ./...

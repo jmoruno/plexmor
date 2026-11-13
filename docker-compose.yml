@@ -1,0 +1,51 @@
+# Stack for Portainer or docker compose. Variables: see .env.example.
+# The administrator's Plex token is read from the Plex server's Preferences.xml (PLEX_CONFIG,
+# mounted read-only); set PLEX_TOKEN instead when Plex runs on another machine. Everything else is
+# configured from the web panel.
+services:
+  plexmor-init:
+    # The data folder is created by Docker as root: give it to the container user.
+    image: busybox:1.37
+    command: ["sh", "-c", "chown ${PUID:-99}:${PGID:-100} /data && chmod 700 /data"]
+    volumes:
+      - ${DATA_PATH:-./data}:/data
+    network_mode: none
+    security_opt:
+      - no-new-privileges:true
+
+  plexmor:
+    # Image published by GitHub Actions from this repository (stable channel)
+    image: jmorunofdz/plexmor:${PLEXMOR_TAG:-stable}
+    container_name: plexmor
+    restart: unless-stopped
+    user: "${PUID:-99}:${PGID:-100}"
+    depends_on:
+      plexmor-init:
+        condition: service_completed_successfully
+    ports:
+      - "${PLEXMOR_PORT:-7254}:7254"
+    environment:
+      - TZ=${TZ:-Europe/Madrid}
+      - PUBLIC_URL=${PUBLIC_URL:-}
+      - PLEX_TOKEN=${PLEX_TOKEN:-}
+      - PLEXMOR_SECRET=${PLEXMOR_SECRET:-}
+      - METRICS_TOKEN=${METRICS_TOKEN:-}
+      # Interface and Stremio texts: es | en
+      - LANGUAGE=${LANGUAGE:-es}
+      # Default audio languages, best first (empty = follows LANGUAGE)
+      - LANGUAGES=${LANGUAGES:-}
+      - SERVERS=${SERVERS:-}
+      - MAX_STREAMS=${MAX_STREAMS:-0}
+      - PLEXMOR_KEY=${PLEXMOR_KEY:-}
+      - TRAKT_CLIENT_ID=${TRAKT_CLIENT_ID:-}
+      - TRAKT_CLIENT_SECRET=${TRAKT_CLIENT_SECRET:-}
+      - LOG_LEVEL=${LOG_LEVEL:-info}
+    volumes:
+      - ${DATA_PATH:-./data}:/data
+      # Folder that holds Plex's Preferences.xml ("Plex Media Server" inside Plex's config folder).
+      - ${PLEX_CONFIG:-./plex-config}:/plex:ro
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
