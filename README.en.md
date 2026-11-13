@@ -1,9 +1,25 @@
-# Plexmor
+<p align="center">
+  <img src="https://raw.githubusercontent.com/jmoruno/plexmor/main/internal/panel/static/logo.png" width="128" height="128" alt="Plexmor">
+</p>
 
-[![CI](https://github.com/jmoruno/plexmor/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/jmoruno/plexmor/actions/workflows/ci.yml) [![Build](https://github.com/jmoruno/plexmor/actions/workflows/docker.yml/badge.svg?branch=main)](https://github.com/jmoruno/plexmor/actions/workflows/docker.yml) [![CodeQL](https://github.com/jmoruno/plexmor/actions/workflows/codeql.yml/badge.svg?branch=main)](https://github.com/jmoruno/plexmor/actions/workflows/codeql.yml) [![Trivy](https://github.com/jmoruno/plexmor/actions/workflows/trivy.yml/badge.svg?branch=main)](https://github.com/jmoruno/plexmor/actions/workflows/trivy.yml) [![Release](https://img.shields.io/github/v/release/jmoruno/plexmor)](https://github.com/jmoruno/plexmor/releases/latest) [![Docker pulls](https://img.shields.io/docker/pulls/jmorunofdz/plexmor)](https://hub.docker.com/r/jmorunofdz/plexmor) [![Image size](https://img.shields.io/docker/image-size/jmorunofdz/plexmor/stable)](https://hub.docker.com/r/jmorunofdz/plexmor) [![License](https://img.shields.io/github/license/jmoruno/plexmor)](LICENSE)
-[![Buy Me a Coffee](https://img.shields.io/badge/Buy%20me%20a%20coffee-FFDD00?logo=buymeacoffee&logoColor=black)](https://buymeacoffee.com/jmoruno)
+<h1 align="center">Plexmor</h1>
 
-[Español](README.md) · **English**
+<p align="center"><em>Your Plex and the ones your friends share with you, inside Stremio.</em></p>
+
+<p align="center">
+  <a href="https://github.com/jmoruno/plexmor/actions/workflows/ci.yml"><img src="https://github.com/jmoruno/plexmor/actions/workflows/ci.yml/badge.svg?branch=main" alt="CI"></a>
+  <a href="https://github.com/jmoruno/plexmor/actions/workflows/docker.yml"><img src="https://github.com/jmoruno/plexmor/actions/workflows/docker.yml/badge.svg?branch=main" alt="Build"></a>
+  <a href="https://github.com/jmoruno/plexmor/actions/workflows/codeql.yml"><img src="https://github.com/jmoruno/plexmor/actions/workflows/codeql.yml/badge.svg?branch=main" alt="CodeQL"></a>
+  <a href="https://github.com/jmoruno/plexmor/actions/workflows/trivy.yml"><img src="https://github.com/jmoruno/plexmor/actions/workflows/trivy.yml/badge.svg?branch=main" alt="Trivy"></a>
+  <a href="https://github.com/jmoruno/plexmor/releases/latest"><img src="https://img.shields.io/github/v/release/jmoruno/plexmor" alt="Release"></a>
+  <a href="https://hub.docker.com/r/jmorunofdz/plexmor"><img src="https://img.shields.io/docker/pulls/jmorunofdz/plexmor" alt="Docker pulls"></a>
+  <a href="https://hub.docker.com/r/jmorunofdz/plexmor"><img src="https://img.shields.io/docker/image-size/jmorunofdz/plexmor/stable" alt="Image size"></a>
+  <a href="https://github.com/jmoruno/plexmor/blob/main/LICENSE"><img src="https://img.shields.io/github/license/jmoruno/plexmor" alt="License"></a>
+  <br>
+  <a href="https://buymeacoffee.com/jmoruno"><img src="https://img.shields.io/badge/Buy%20me%20a%20coffee-FFDD00?logo=buymeacoffee&logoColor=black" alt="Buy Me a Coffee"></a>
+</p>
+
+<p align="center"><a href="https://github.com/jmoruno/plexmor/blob/main/README.md">Español</a> · <b>English</b></p>
 
 Stremio addon (works with Nuvio and AIOStreams) for your Plex server and the ones your friends share with you, with a web panel and multiple users.
 It answers from its own in-memory index, so Stremio never waits for a Plex server.
