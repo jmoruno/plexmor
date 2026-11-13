@@ -2,6 +2,14 @@
 
 Versiones con [SemVer](https://semver.org/lang/es/). Las notas de cada versión también están en las [releases](../../releases).
 
+## [0.3.1] - 2026-11-13
+
+### Corregido
+
+- Los vídeos ya no se cortan a mitad detrás de Nginx o Nginx Proxy Manager. Plexmor pide que no guarden el vídeo en disco (`X-Accel-Buffering: no`): al llenarse su fichero temporal de 1 GB dejaban de leer y Plex cerraba la conexión, y el reproductor daba un error al leer el vídeo.
+- Si Plex corta la conexión en mitad de un fichero, Plexmor la reanuda desde el mismo byte sin que el reproductor lo note (hasta 5 veces seguidas).
+- Los cortes de Plex quedan en el log.
+
 ## [0.3.0] - 2026-11-13
 
 ### Añadido

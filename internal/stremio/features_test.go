@@ -1,6 +1,7 @@
 package stremio
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"io"
@@ -8,6 +9,7 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/jmoruno/plexmor/internal/accounts"
 	"github.com/jmoruno/plexmor/internal/plex"
@@ -281,4 +283,44 @@ func TestEachAccountUsesItsOwnAccess(t *testing.T) {
 			t.Fatalf("pepe must not see the libraries of servers he cannot use: %s", c.ID)
 		}
 	}
+}
+
+func TestProxyResumesWhenPlexDropsTheStream(t *testing.T) {
+	resumeDelay = time.Millisecond
+	f := featureFixture(t, accounts.ModeAuto, nil)
+	content := make([]byte, 3<<20)
+	for i := range content {
+		content[i] = byte(i * 7 % 251)
+	}
+	f.own.PartContent, f.own.CutAfter = content, 700_000
+	path := accPath("/play/own-id/library/parts/10/1/file.mkv")
+
+	f.own.CutParts.Store(2)
+	before := f.own.PartRequests.Load()
+	rec := fetch(t, f.handler, path, nil)
+	if rec.Code != http.StatusOK || !bytes.Equal(rec.Body.Bytes(), content) {
+		t.Fatalf("the whole file must arrive despite two drops: %d, %d of %d bytes", rec.Code, rec.Body.Len(), len(content))
+	}
+	if got := f.own.PartRequests.Load() - before; got != 3 {
+		t.Fatalf("expected the first request and two resumes, got %d requests", got)
+	}
+	if rec.Header().Get("X-Accel-Buffering") != "no" {
+		t.Fatal("reverse proxies must not buffer the video")
+	}
+
+	f.own.CutParts.Store(1)
+	rec = fetch(t, f.handler, path, map[string]string{"Range": "bytes=100000-2999999"})
+	if rec.Code != http.StatusPartialContent || !bytes.Equal(rec.Body.Bytes(), content[100000:3000000]) {
+		t.Fatalf("a range must be resumed from where it stopped: %d, %d bytes", rec.Code, rec.Body.Len())
+	}
+
+	// A server that keeps dropping the stream is given up on.
+	f.own.CutParts.Store(100)
+	f.own.CutAfter = 100_000
+	before = f.own.PartRequests.Load()
+	rec = fetch(t, f.handler, path, nil)
+	if rec.Body.Len() >= len(content) || f.own.PartRequests.Load()-before != 1+maxResumes {
+		t.Fatalf("give up after %d resumes: %d bytes, %d requests", maxResumes, rec.Body.Len(), f.own.PartRequests.Load()-before)
+	}
+	f.own.CutParts.Store(0)
 }

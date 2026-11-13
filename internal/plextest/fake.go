@@ -2,7 +2,9 @@
 package plextest
 
 import (
+	"bytes"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"strconv"
@@ -45,6 +47,14 @@ type Server struct {
 	FailSection atomic.Value // string
 	// FailMetadata makes every /library/metadata request answer 500.
 	FailMetadata atomic.Bool
+	// PartContent replaces the content of every file (default "CONTENT <path>").
+	PartContent []byte
+	// CutParts makes the next file responses stop after CutAfter bytes and close the
+	// connection, as when Plex drops a stream.
+	CutParts atomic.Int64
+	CutAfter int
+	// PartRequests counts the requests for files.
+	PartRequests atomic.Int64
 	srv          *httptest.Server
 	mu           sync.Mutex
 }
@@ -77,7 +87,15 @@ func (s *Server) serve(w http.ResponseWriter, r *http.Request) {
 	switch {
 	case strings.HasPrefix(path, "/library/parts/") || strings.HasPrefix(path, "/library/streams/"):
 		// Files are served whatever the Accept header, with Range support.
-		http.ServeContent(w, r, "file", time.Unix(0, 0), strings.NewReader("CONTENT "+path))
+		s.PartRequests.Add(1)
+		content := []byte("CONTENT " + path)
+		if s.PartContent != nil {
+			content = s.PartContent
+		}
+		if s.CutParts.Add(-1) >= 0 {
+			w = &cutWriter{ResponseWriter: w, left: s.CutAfter}
+		}
+		http.ServeContent(w, r, "file", time.Unix(0, 0), bytes.NewReader(content))
 		return
 	case path == "/photo/:/transcode":
 		w.Header().Set("Content-Type", "image/jpeg")
@@ -288,4 +306,24 @@ func (s *Server) accepts(tok string) bool {
 		}
 	}
 	return false
+}
+
+// cutWriter sends left bytes of the body and then drops the connection.
+type cutWriter struct {
+	http.ResponseWriter
+	left int
+}
+
+func (c *cutWriter) Write(p []byte) (int, error) {
+	if len(p) <= c.left {
+		c.left -= len(p)
+		return c.ResponseWriter.Write(p)
+	}
+	n, _ := c.ResponseWriter.Write(p[:c.left])
+	c.left = 0
+	c.ResponseWriter.(http.Flusher).Flush()
+	if conn, _, err := c.ResponseWriter.(http.Hijacker).Hijack(); err == nil {
+		conn.Close()
+	}
+	return n, errors.New("connection dropped")
 }
