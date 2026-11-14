@@ -8,7 +8,6 @@ Versiones con [SemVer](https://semver.org/lang/es/). Las notas de cada versión 
 
 - Imagen base Debian 13 (distroless): certificados raíz y zona horaria al día.
 - Cada semana se reconstruye la última versión estable con la imagen base actualizada, sin cambiar el código.
-- CodeQL ya no analiza el código de pruebas (falsos positivos en el Plex simulado de los tests).
 
 ## [0.3.1] - 2026-11-13
 

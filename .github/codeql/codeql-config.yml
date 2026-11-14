@@ -1,5 +1,0 @@
-name: Plexmor
-# El Plex falso y los tests no forman parte del programa: analizarlos solo da falsos positivos.
-paths-ignore:
-  - internal/plextest
-  - "**/*_test.go"
