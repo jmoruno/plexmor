@@ -1,10 +1,13 @@
-# Stack for Portainer or docker compose. Variables: see .env.example.
-# The administrator's Plex token is read from the Plex server's Preferences.xml (PLEX_CONFIG,
-# mounted read-only); set PLEX_TOKEN instead when Plex runs on another machine. Everything else is
-# configured from the web panel.
+# Plexmor stack for Portainer or docker compose.
+# Step-by-step guide: docs/portainer.md (English) · docs/portainer.es.md (español).
+#
+# In Portainer, paste this file in Stacks > Add stack > Web editor and set the variables
+# below in "Environment variables". Only DATA_PATH is required; everything else has a default
+# or is configured later from the web panel (http://<server>:7254).
 services:
   plexmor-init:
-    # The data folder is created by Docker as root: give it to the container user.
+    # One-off helper: Docker creates DATA_PATH owned by root, so this gives it to the user
+    # Plexmor runs as (PUID:PGID) and exits. It is normal to see it as "exited".
     image: busybox:1.37
     command: ["sh", "-c", "chown ${PUID:-99}:${PGID:-100} /data && chmod 700 /data"]
     volumes:
@@ -14,10 +17,12 @@ services:
       - no-new-privileges:true
 
   plexmor:
-    # Image published by GitHub Actions from this repository (stable channel)
+    # stable = latest release. Pin a version (e.g. 0.3.2) with PLEXMOR_TAG.
     image: jmorunofdz/plexmor:${PLEXMOR_TAG:-stable}
     container_name: plexmor
     restart: unless-stopped
+    # Run as the same user as Plex, so Plexmor can read Preferences.xml.
+    # Find the numbers with: ls -ln "<PLEX_CONFIG>/Preferences.xml" (Unraid: 99:100).
     user: "${PUID:-99}:${PGID:-100}"
     depends_on:
       plexmor-init:
@@ -25,15 +30,22 @@ services:
     ports:
       - "${PLEXMOR_PORT:-7254}:7254"
     environment:
-      - TZ=${TZ:-Europe/Madrid}
+      - TZ=${TZ:-Etc/UTC}
+      # Public HTTPS address when it sits behind a reverse proxy (https://plexmor.example.com).
+      # Empty = the address you open the panel with.
       - PUBLIC_URL=${PUBLIC_URL:-}
+      # Only when Plex runs on another machine and PLEX_CONFIG cannot be mounted.
+      # Empty + no PLEX_CONFIG = the first person to sign in to the panel becomes the administrator.
       - PLEX_TOKEN=${PLEX_TOKEN:-}
+      # Encrypts stored Plex tokens and signs sessions. Empty = generated in /data/secret.
       - PLEXMOR_SECRET=${PLEXMOR_SECRET:-}
+      # Lets Prometheus read /metrics with "Authorization: Bearer <token>".
       - METRICS_TOKEN=${METRICS_TOKEN:-}
-      # Interface and Stremio texts: es | en
+      # Default language of the panel and of the texts in Stremio: en | es (each user can change it).
       - LANGUAGE=${LANGUAGE:-es}
-      # Default audio languages, best first (empty = follows LANGUAGE)
+      # Default audio languages, best first (e.g. ingles,japones). Empty = follows LANGUAGE.
       - LANGUAGES=${LANGUAGES:-}
+      # Only use these Plex servers (names, comma separated). Empty = all.
       - SERVERS=${SERVERS:-}
       - MAX_STREAMS=${MAX_STREAMS:-0}
       - PLEXMOR_KEY=${PLEXMOR_KEY:-}
@@ -41,8 +53,10 @@ services:
       - TRAKT_CLIENT_SECRET=${TRAKT_CLIENT_SECRET:-}
       - LOG_LEVEL=${LOG_LEVEL:-info}
     volumes:
+      # Index, accounts and secret.
       - ${DATA_PATH:-./data}:/data
-      # Folder that holds Plex's Preferences.xml ("Plex Media Server" inside Plex's config folder).
+      # Plex's config folder that holds Preferences.xml (read-only). The Plex server owner then
+      # becomes the administrator without typing any token. See the guide for the usual paths.
       - ${PLEX_CONFIG:-./plex-config}:/plex:ro
     read_only: true
     security_opt:

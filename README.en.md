@@ -43,8 +43,12 @@ For an English setup, set `LANGUAGE=en`.
 
 ## Install (Portainer or docker compose)
 
+📘 **Step-by-step guide: [Installing Plexmor with Portainer](https://github.com/jmoruno/plexmor/blob/main/docs/portainer.md)**: folders, Plex paths for each kind of install, user, deployment, HTTPS and troubleshooting.
+
+In short:
+
 1. A stack with [`docker-compose.yml`](docker-compose.yml) (image `jmorunofdz/plexmor:stable`).
-2. Stack variables: those in [`.env.example`](.env.example). The minimum is `DATA_PATH` and `PLEX_CONFIG`.
+2. Stack variables: those in [`.env.example`](.env.example). Only `DATA_PATH` is required; with `PLEX_CONFIG` the Plex owner becomes the administrator without typing any token.
 3. Open the panel (`http://<server>:7254/` or your domain), sign in with Plex and press **Install in the app** or **Open in Stremio Web**.
 
 To use it away from home, publish it over HTTPS (for example with Nginx Proxy Manager). Stremio Web requires HTTPS.
