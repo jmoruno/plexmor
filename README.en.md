@@ -74,7 +74,7 @@ Others, for specific cases: `SYNC_INTERVAL` (10m), `HEALTH_INTERVAL` (1m), `RESO
 | `main` and other branches | development | Try changes without touching production |
 | `sha-<commit>` | — | One exact build |
 
-Images for `linux/amd64` and `linux/arm64`, with provenance and SBOM.
+Images for `linux/amd64` and `linux/arm64`, with provenance and SBOM. Every Monday the latest stable version is rebuilt on an up-to-date base image, with the same tags.
 
 Workflow:
 

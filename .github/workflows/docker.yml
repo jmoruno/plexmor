@@ -4,8 +4,11 @@ name: Imagen Docker
 # Versión estable X.Y.Z    -> :X.Y.Z :X.Y :stable :latest y release.
 # Versión beta X.Y.Z-rc.N  -> :X.Y.Z-rc.N :beta y pre-release.
 # Se lanza en Actions > Imagen Docker > Run workflow (rama main) con "version" (p. ej. 0.3.0).
+# Cada lunes reconstruye la última versión estable con la imagen base al día (mismas etiquetas).
 # Necesita los secretos DOCKERHUB_USERNAME y DOCKERHUB_TOKEN; sin ellos solo construye.
 on:
+  schedule:
+    - cron: "47 5 * * 1"
   push:
     branches: ["**"]
     paths-ignore: ["**.md", "docs/**"]
@@ -38,7 +41,7 @@ jobs:
 
   docker:
     needs: test
-    if: ${{ !failure() && !cancelled() }}
+    if: ${{ !failure() && !cancelled() && github.event_name != 'schedule' }}
     runs-on: ubuntu-latest
     permissions:
       contents: write # etiqueta y release de las versiones
@@ -123,3 +126,55 @@ jobs:
           notas=$(awk -v v="$VERSION" '$0 ~ "^## \\[" v "\\]" {f=1; next} /^## \[/ {f=0} f' CHANGELOG.md)
           gh release create "v$VERSION" --target "$GITHUB_SHA" --title "v$VERSION" $extra \
             --notes "$notas"$'\n\n'"Imagen: \`docker pull $IMAGE:$VERSION\` (canal \`$canal\`)"
+
+  refresh:
+    # Certificados, zona horaria y demás paquetes de la imagen base se actualizan sin esperar a
+    # una versión nueva de Plexmor: se reconstruye la última estable con el mismo código.
+    if: github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    env:
+      IMAGE: ${{ secrets.DOCKERHUB_USERNAME || 'jmorunofdz' }}/plexmor
+      PUSH: ${{ secrets.DOCKERHUB_TOKEN != '' }}
+    steps:
+      - name: Última versión estable
+        id: rel
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tag=$(gh release view --repo "$GITHUB_REPOSITORY" --json tagName --jq .tagName)
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          echo "version=${tag#v}" >> "$GITHUB_OUTPUT"
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ steps.rel.outputs.tag }}
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        if: env.PUSH == 'true'
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - uses: docker/metadata-action@v5
+        id: meta
+        with:
+          images: ${{ env.IMAGE }}
+          tags: |
+            type=raw,value=${{ steps.rel.outputs.version }}
+            type=semver,pattern={{major}}.{{minor}},value=${{ steps.rel.outputs.version }}
+            type=raw,value=stable
+            type=raw,value=latest
+          labels: |
+            org.opencontainers.image.title=Plexmor
+            org.opencontainers.image.description=Stremio addon for your Plex servers and the ones shared with you
+            org.opencontainers.image.licenses=MIT
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          platforms: linux/amd64,linux/arm64
+          push: ${{ env.PUSH == 'true' }}
+          build-args: VERSION=${{ steps.rel.outputs.tag }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          provenance: mode=max
+          sbom: true
+          pull: true # imagen base recién descargada
+          no-cache: true

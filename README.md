@@ -72,7 +72,7 @@ Otras, para casos concretos: `SYNC_INTERVAL` (10m), `HEALTH_INTERVAL` (1m), `RES
 | `main` y otras ramas | desarrollo | Probar cambios sin tocar producción |
 | `sha-<commit>` | — | Una build exacta |
 
-Imágenes para `linux/amd64` y `linux/arm64`, con procedencia y SBOM.
+Imágenes para `linux/amd64` y `linux/arm64`, con procedencia y SBOM. Cada lunes se reconstruye la última versión estable con la imagen base al día, con las mismas etiquetas.
 
 Flujo de trabajo:
 
